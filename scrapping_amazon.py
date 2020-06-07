@@ -11,7 +11,11 @@ from bs4 import BeautifulSoup
 # https://www.amazon.com/Best-Sellers-Kindle-Store-eBooks/zgbs/digital-text/154606011
 # top 100 ebook: https://www.amazon.com/Best-Sellers-Kindle-Store/zgbs/digital-text/ref=zg_bs_pg_1?_encoding=UTF8&pg=1
 
-urls = ["https://www.amazon.com/Best-Sellers-Kindle-Store/zgbs/digital-text/ref=zg_bs_pg_1?_encoding=UTF8&pg="]
+urls = [
+    "https://www.amazon.com/Best-Sellers-Kindle-Store-Salad-Cooking/zgbs/digital-text/156276011/ref=zg_bs_pg_1?_encoding=UTF8&pg=",
+    "https://www.amazon.com/Best-Sellers-Kindle-Store-Vegan-Cooking/zgbs/digital-text/14530437011/ref=zg_bs_pg_1?_encoding=UTF8&pg=",
+    "https://www.amazon.com/Best-Sellers-Kindle-Store-Vegetable-Cooking/zgbs/digital-text/156277011/ref=zg_bs_pg_1?_encoding=UTF8&pg="   
+]
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.18363"}
 
 
@@ -90,6 +94,5 @@ def iterate_through_amazon(urls):
     
 if __name__ == '__main__':
     
-    print(urls)
     iterate_through_amazon(urls)
     print("finish")
