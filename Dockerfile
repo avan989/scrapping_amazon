@@ -1,17 +1,13 @@
-FROM python:3.7-alpine
+FROM python:3.7.6-buster
 MAINTAINER Anh 
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 0
 
-
-# download dependency
-RUN apk update \
-	&& apk add gcc libxml2-dev libxslt-dev libc-dev
-
 RUN pip install --upgrade pip
 RUN pip install requests bs4 lxml
+RUN pip install pandas nltk
  
 # copy project
 RUN mkdir /app
