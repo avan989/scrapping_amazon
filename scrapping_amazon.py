@@ -121,13 +121,16 @@ def get_website_data(website_url):
     
     if amazon_soup.find(id='productTitle') is not None:
 
-        product_title = amazon_soup.find(id='productTitle').get_text().strip()
-        sales_rank_info = amazon_soup.find(id='SalesRank').get_text().strip()
-        sales_rank_info_strip_comma = sales_rank_info.replace(',', '')
-        sales_rank_list = re.findall('\d+', sales_rank_info_strip_comma ) # https://stackoverflow.com/questions/26825729/extract-number-from-string-in-python, answer from Irshad Bhat
-        overall_sales_rank = int(sales_rank_list[0])
-     
-        return_data = [product_title, overall_sales_rank]
+        try:
+            product_title = amazon_soup.find(id='productTitle').get_text().strip()
+            sales_rank_info = amazon_soup.find(id='SalesRank').get_text().strip()
+            sales_rank_info_strip_comma = sales_rank_info.replace(',', '')
+            sales_rank_list = re.findall('\d+', sales_rank_info_strip_comma ) # https://stackoverflow.com/questions/26825729/extract-number-from-string-in-python, answer from Irshad Bhat
+            overall_sales_rank = int(sales_rank_list[0])
+         
+            return_data = [product_title, overall_sales_rank]
+        except:
+            return_data = ["None", "None"]
     else: 
         return_data = ["None", "None"]
     
@@ -172,26 +175,79 @@ def website_list_view(website_url):
 def get_keyword_competition_data():
     
     # open files that contain keywords
+    list_of_comptition = []
+    count = 0
+    final_data = []
     keywords = get_csv()
     
     #iterate through title for amazon search engine 
-    for text in keywords:
-        search_url = "https://www.amazon.com/s?k=" + text + "&i=digital-text&ref=nb_sb_noss_1"
-        response = requests.get(search_url, headers=headers)
-        amazon_soup = BeautifulSoup(response.content, features='lxml')
-        
-        total_search_results = amazon_soup.find_all("div", attrs={"class": "sg-col-inner"})
-
-        total_span_tag = total_search_results[0].find_all("span")
-        total_search_query = re.findall('\d+', total_span_tag[0].get_text())
-        total_search_result_final = int(total_search_query[-1]) 
-        print(total_search_result_final)              
-               
+    for index, text in enumerate(keywords):
+                   
+        # get total number of search results
+        try:
+            time_to_pause = 1 * index % 5 
+            time.sleep(time_to_pause)
+            search_url = "https://www.amazon.com/s?k=" + text + "&i=digital-text&ref=nb_sb_noss_1"
+            print(search_url)
             
+            response = requests.get(search_url, headers=headers)
+            amazon_soup = BeautifulSoup(response.content, features='lxml')
+            total_search_results = amazon_soup.find_all("div", attrs={"class": "sg-col-inner"})
+            total_span_tag = total_search_results[0].find_all("span")
+            total_search_query = re.findall('\d+', total_span_tag[0].get_text())
+            total_search_result_final = int(total_search_query[-1]) 
+        except:
+            continue
 
+        if total_search_result_final <= 1:
+            continue
+       
+        # get list of competition
+        # only need the first 12 relevaent search results
+        if total_search_result_final < 12:
+            product_search = total_search_result_final
+        else:
+            product_search = 12
+           
+        links = amazon_soup.select("span.celwidget div.a-section.a-spacing-none h2.a-size-mini.a-spacing-none.a-color-base.s-line-clamp-2 a.a-link-normal.a-text-normal")
+        url = ['https://amazon.com' + link['href'] for index, link in enumerate(links) if index <= product_search and index != 0]
+        link_url =  set(url)
         
-        break
-
+        # iterate through url to get website competition data
+        competition_ranking = []
+        for index, website in enumerate(link_url):
+        
+            data = get_website_data(website)
+            competition_ranking.append(data[1])
+                        
+            time_to_pause = 1 * index % 5 
+            time.sleep(time_to_pause)
+        
+        # if not enough data to add up to 12, append 0 till lenght is 12
+        if len(competition_ranking) < 12:
+            for _ in range(12 - len(competition_ranking)):
+                competition_ranking.append(0)
+        
+        
+        competition_ranking.append(total_search_result_final)
+        competition_ranking.append(text)
+        
+        final_data.append(competition_ranking)
+        
+        # clearn up final_data
+        for row in final_data:
+            for index, value in enumerate(row):
+                if value == 'None':
+                    row[index] = 1000000
+                    
+                    
+        # wrtie file from data  
+        with open('competition.csv', mode='a') as product_info:
+        
+            writer = csv.writer(product_info, delimiter=',')
+           
+            print(competition_ranking)
+            writer.writerow(competition_ranking)
 
 #clean up dataset        
 def get_csv():
@@ -219,7 +275,7 @@ def get_csv():
       
         for index, word in enumerate(filtered_sentence):
         
-            if index == 10:
+            if index == 8:
                 break
                 
             new_sentence += word + " "
@@ -231,10 +287,10 @@ def get_csv():
 if __name__ == '__main__':
     
     # Gets top 100 data
-    iterate_through_amazon(urls)
+    #iterate_through_amazon(urls)
     
     # Iterate through the top 100 data saved in the files to get ranking informations
-    # get_keyword_competition_data()
+    get_keyword_competition_data()
     
     
     print("finish")
